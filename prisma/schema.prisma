@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String        @id @default(cuid())
+  rollNo        String        @unique
+  password      String
+  name          String
+  createdAt     DateTime      @default(now())
+  spaces        SpaceMember[]
+  ownedSpaces   Space[]
+  uploadedFiles File[]
+}
+
+model Space {
+  id                 String   @id @default(cuid())
+  name               String
+  ownerId            String
+  owner              User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt          DateTime @default(now())
+  membersOwnFilesOnly Boolean  @default(false)
+  inviteToken        String?  @unique
+  defaultJoinRole    String   @default("member")
+  members            SpaceMember[]
+  files              File[]
+  activity           ActivityLog[]
+}
+
+model SpaceMember {
+  id        String   @id @default(cuid())
+  spaceId   String
+  userId    String
+  role      String   // admin | member | viewer
+  joinedAt  DateTime @default(now())
+  space     Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([spaceId, userId])
+}
+
+model File {
+  id          String   @id @default(cuid())
+  spaceId     String
+  uploadedById String?
+  name        String
+  mimeType    String
+  size        Int
+  storageId   String   // Google Drive file ID - never exposed to client
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  space       Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  uploadedBy  User?    @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  spaceId   String
+  userId    String
+  action    String   // upload | delete | rename | member_add | member_remove | member_role | space_rename | space_delete
+  target    String?  // file name, member roll no, etc.
+  metadata  String?  // JSON for extra data
+  createdAt DateTime @default(now())
+  space     Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+}

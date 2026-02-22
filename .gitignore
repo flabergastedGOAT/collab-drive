@@ -1,0 +1,8 @@
+node_modules
+.next
+.env
+.env.local
+*.db
+*.db-journal
+service-account.json
+client_secret*.json
