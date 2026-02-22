@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { randomBytes } from 'crypto';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { canManageSpace } from '@/lib/roles';
+import { canManageSpace, type Role } from '@/lib/roles';
 
 async function getMember(spaceId: string, userId: string) {
   return db.spaceMember.findUnique({ where: { spaceId_userId: { spaceId, userId } } });
@@ -56,7 +56,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const session = await requireAuth();
     const { id } = await params;
     const member = await getMember(id, session.userId);
-    if (!member || !canManageSpace(member.role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!member || !canManageSpace(member.role as Role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     const body = await req.json();
     const parsed = updateSchema.parse(body);
     const space = await db.space.update({
@@ -86,7 +86,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const session = await requireAuth();
     const { id } = await params;
     const member = await getMember(id, session.userId);
-    if (!member || !canManageSpace(member.role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!member || !canManageSpace(member.role as Role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     const { deleteSpaceFolder } = await import('@/lib/storage');
     try {
       await deleteSpaceFolder(id);

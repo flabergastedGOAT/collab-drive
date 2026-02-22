@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { canUpload } from '@/lib/roles';
+import { canUpload, type Role } from '@/lib/roles';
 import { uploadFile } from '@/lib/storage';
 import { checkUploadRateLimit } from '@/lib/rateLimit';
 import { emitToSpace } from '@/lib/socket-emit';
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const session = await requireAuth();
     const { id } = await params;
     const member = await getMember(id, session.userId);
-    if (!member || !canUpload(member.role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!member || !canUpload(member.role as Role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     if (!checkUploadRateLimit(session.userId)) return NextResponse.json({ error: 'Upload rate limit exceeded' }, { status: 429 });
     const formData = await req.formData();
     const file = formData.get('file') as File | null;

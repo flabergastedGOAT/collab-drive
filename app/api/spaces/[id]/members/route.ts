@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { canManageMembers } from '@/lib/roles';
+import { canManageMembers, type Role } from '@/lib/roles';
 import { emitToSpace } from '@/lib/socket-emit';
 
 async function getMember(spaceId: string, userId: string) {
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const session = await requireAuth();
     const { id } = await params;
     const member = await getMember(id, session.userId);
-    if (!member || !canManageMembers(member.role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!member || !canManageMembers(member.role as Role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     const body = await req.json();
     const { rollNo, role } = inviteSchema.parse(body);
     const user = await db.user.findUnique({ where: { rollNo } });

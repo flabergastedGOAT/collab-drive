@@ -3,7 +3,7 @@ import { Readable } from 'stream';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { canDelete } from '@/lib/roles';
+import { canDelete, type Role } from '@/lib/roles';
 import { downloadFile, deleteFile } from '@/lib/storage';
 import { emitToSpace } from '@/lib/socket-emit';
 
@@ -48,7 +48,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const session = await requireAuth();
     const { id, fileId } = await params;
     const member = await getMember(id, session.userId);
-    if (!member || !canDelete(member.role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!member || !canDelete(member.role as Role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     const space = await db.space.findUnique({ where: { id }, select: { membersOwnFilesOnly: true } });
     const file = await db.file.findFirst({ where: { id: fileId, spaceId: id } });
     if (!file || !space) return NextResponse.json({ error: 'File not found' }, { status: 404 });
@@ -78,7 +78,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const session = await requireAuth();
     const { id, fileId } = await params;
     const member = await getMember(id, session.userId);
-    if (!member || !canDelete(member.role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!member || !canDelete(member.role as Role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     const space = await db.space.findUnique({ where: { id }, select: { membersOwnFilesOnly: true } });
     const file = await db.file.findFirst({ where: { id: fileId, spaceId: id } });
     if (!file || !space) return NextResponse.json({ error: 'File not found' }, { status: 404 });
