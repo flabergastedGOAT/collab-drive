@@ -72,11 +72,12 @@ export default function SpacePage() {
   }, [fetchSpace, fetchFiles, fetchMembers, fetchActivity]);
 
   useSpaceSocket(spaceId, {
-    files: (data: FileItem) => {
+    files: (data: unknown) => {
+      const fileData = data as FileItem;
       setFiles((f) => {
-        const idx = f.findIndex((x) => x.id === data.id);
-        if (idx >= 0) return f.map((x, i) => (i === idx ? data : x));
-        return [data, ...f];
+        const idx = f.findIndex((x) => x.id === fileData.id);
+        if (idx >= 0) return f.map((x, i) => (i === idx ? fileData : x));
+        return [fileData, ...f];
       });
     },
     fileDeleted: (data) => setFiles((f) => f.filter((x) => x.id !== data.id)),
